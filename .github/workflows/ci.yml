@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Types, lint, unit tests, package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit, component and axe tests
+        run: npm test
+
+      # `build` also runs the 'use client' boundary check, which is the thing
+      # that regresses silently on a tsup upgrade.
+      - name: Build
+        run: npm run build
+
+      - name: Bundle size gates
+        run: npm run size
+
+      - name: Package manifest (publint + are-the-types-wrong)
+        run: npm run check:package
+
+      - name: Verify tarball contents
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e "
+            const [pkg] = JSON.parse(require('fs').readFileSync('/tmp/pack.json', 'utf8'));
+            const files = pkg.files.map((f) => f.path).sort();
+            const required = [
+              'dist/index.mjs', 'dist/index.cjs', 'dist/index.d.ts', 'dist/index.d.cts',
+              'dist/core.mjs', 'dist/core.cjs', 'dist/core.d.ts', 'dist/core.d.cts',
+              'dist/fonts/opendyslexic-latin-400-normal.woff2',
+              'dist/fonts/opendyslexic-latin-700-normal.woff2',
+              'README.md', 'LICENSE', 'LICENSE-OpenDyslexic.txt',
+            ];
+            const missing = required.filter((f) => !files.includes(f));
+            if (missing.length) {
+              console.error('Missing from tarball:\n  ' + missing.join('\n  '));
+              process.exit(1);
+            }
+            // The fonts must never be inlined into the JS bundles.
+            const srcLeak = files.filter((f) => f.startsWith('src/'));
+            if (srcLeak.length) {
+              console.error('Source files leaked into tarball: ' + srcLeak.join(', '));
+              process.exit(1);
+            }
+            console.log('Tarball OK: ' + files.length + ' files, ' + Math.round(pkg.size / 1024) + ' kB');
+          "
+
+  e2e:
+    name: End-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The example app installs the package from `file:..`, so the build has to
+      # exist before its own install resolves.
+      - name: Build package
+        run: npm run build
+
+      - name: Install example dependencies
+        run: npm --prefix examples/next-app-router install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run E2E
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  changeset:
+    name: Changeset present
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'no-changeset')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fail if this PR ships no changeset
+        run: npx changeset status --since=origin/main

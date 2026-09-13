@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "declaration": true,
+    // tsup injects baseUrl into its dts tsconfig; TS 6 errors on it (TS5101).
+    "ignoreDeprecations": "6.0",
+    "noEmit": true
+  },
+  "include": ["src", "tests", "e2e", "types", "scripts", "tsup.config.ts", "vitest.config.ts", "vitest.setup.ts", "playwright.config.ts"],
+  "exclude": ["dist", "node_modules", "examples"]
+}

@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  # Required for npm provenance, and for trusted publishing if you switch to it.
+  id-token: write
+
+jobs:
+  release:
+    name: Version PR or publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      # Publishing an unverified build would defeat the point of the gates.
+      - name: Verify before publishing
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+          npm run build
+          npm run size
+          npm run check:package
+
+      # Opens (or updates) a "Version Packages" PR when changesets are pending.
+      # Merging that PR re-runs this workflow with no pending changesets, and
+      # this step publishes instead.
+      - name: Create version PR or publish
+        uses: changesets/action@v1
+        with:
+          version: npm run version
+          publish: npm run release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Ties the published tarball to this workflow run and commit.
+          NPM_CONFIG_PROVENANCE: true

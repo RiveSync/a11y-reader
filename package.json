@@ -1,0 +1,142 @@
+{
+  "name": "@rivesync/a11y-reader",
+  "version": "0.0.0",
+  "description": "Drop-in accessibility reading widget for React and Next.js: dyslexia-friendly font, high contrast, font scaling, letter and line spacing, and a reading ruler or focus mask.",
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "dyslexia",
+    "opendyslexic",
+    "high-contrast",
+    "reading-ruler",
+    "react",
+    "nextjs",
+    "wcag"
+  ],
+  "homepage": "https://github.com/RiveSync/a11y-reader#readme",
+  "bugs": {
+    "url": "https://github.com/RiveSync/a11y-reader/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RiveSync/a11y-reader.git"
+  },
+  "license": "MIT",
+  "author": "Rohit Roshan Sahu",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./core": {
+      "import": {
+        "types": "./dist/core.d.ts",
+        "default": "./dist/core.mjs"
+      },
+      "require": {
+        "types": "./dist/core.d.cts",
+        "default": "./dist/core.cjs"
+      }
+    },
+    "./fonts/*": "./dist/fonts/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "core",
+    "README.md",
+    "LICENSE",
+    "LICENSE-OpenDyslexic.txt"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup && node scripts/copy-fonts.mjs && npm run check:directives",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "check:directives": "node scripts/check-directives.mjs",
+    "check:package": "publint && attw --pack .",
+    "size": "size-limit",
+    "prepublishOnly": "npm run build",
+    "copy:fonts": "node scripts/copy-fonts.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run size && npm run check:package",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "npm run build && changeset publish"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@axe-core/playwright": "^4.13.0",
+    "@changesets/cli": "^3.0.2",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.63.0",
+    "@size-limit/preset-small-lib": "^11.2.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "axe-core": "^4.13.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.6",
+    "publint": "^0.3.24",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "size-limit": "^11.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0",
+    "vitest-axe": "^0.1.0"
+  },
+  "size-limit": [
+    {
+      "name": "react entry (gzip, PRD 10 gate)",
+      "path": "dist/index.mjs",
+      "limit": "25 kB",
+      "brotli": false,
+      "gzip": true
+    },
+    {
+      "name": "core entry (gzip)",
+      "path": "dist/core.mjs",
+      "limit": "15 kB",
+      "brotli": false,
+      "gzip": true
+    }
+  ]
+}

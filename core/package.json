@@ -1,0 +1,8 @@
+{
+  "//": "Legacy resolution shim. Modern tooling uses the root exports map; this exists so TypeScript's node10 moduleResolution and pre-exports bundlers can still resolve @rivesync/a11y-reader/core.",
+  "name": "@rivesync/a11y-reader-core",
+  "private": true,
+  "main": "../dist/core.cjs",
+  "module": "../dist/core.mjs",
+  "types": "../dist/core.d.ts"
+}

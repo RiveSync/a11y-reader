@@ -1,0 +1,5 @@
+dist/
+coverage/
+fonts/
+.next/
+package-lock.json
