@@ -1,6 +1,6 @@
 {
   "name": "@rivesync/a11y-reader",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Drop-in accessibility reading widget for React and Next.js: dyslexia-friendly font, high contrast, font scaling, letter and line spacing, and a reading ruler or focus mask.",
   "keywords": [
     "accessibility",
