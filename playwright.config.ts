@@ -45,5 +45,9 @@ export default defineConfig({
     timeout: 180_000,
   },
 
-  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+  // Includes platform and project: screenshot baselines are not portable
+  // between macOS and the Linux CI runner, because font rasterisation differs.
+  // No committed baselines exist today — revert.spec.ts compares two captures
+  // from the same run — but any that get added must not be platform-blind.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}-{platform}{ext}',
 });

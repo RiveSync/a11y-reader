@@ -90,8 +90,18 @@ test('reset restores the page pixel-for-pixel', async ({ page }) => {
   const showWidget = () =>
     page.evaluate(() => document.getElementById('__test-hide-widget')?.remove());
 
+  /*
+   * Both captures happen inside this run and are compared to each other, rather
+   * than to a committed baseline PNG.
+   *
+   * A checked-in screenshot would pin the test to the machine that generated
+   * it: font rasterisation differs between macOS and the Linux CI runner, so a
+   * baseline from a laptop fails on CI for reasons that have nothing to do with
+   * revert. Comparing before-to-after is also the stronger claim — it is the
+   * actual property, on whatever platform happens to be running.
+   */
   await isolatePage();
-  await expect(page.locator('main')).toHaveScreenshot('page-pristine.png');
+  const pristine = await page.locator('main').screenshot();
 
   await showWidget();
   await enableEverything(page);
@@ -101,8 +111,8 @@ test('reset restores the page pixel-for-pixel', async ({ page }) => {
     .toBe(false);
 
   await isolatePage();
-  // Zero tolerance: any difference at all means something was not restored.
-  await expect(page.locator('main')).toHaveScreenshot('page-pristine.png', {
-    maxDiffPixels: 0,
-  });
+  const reverted = await page.locator('main').screenshot();
+
+  // Identical pixels encode to identical PNG bytes.
+  expect(reverted.equals(pristine)).toBe(true);
 });
