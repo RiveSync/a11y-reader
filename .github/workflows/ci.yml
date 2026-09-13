@@ -98,9 +98,16 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
 
-      - name: Install browsers
-        run: npx playwright install --with-deps chromium webkit
+      # Browser binaries are ~170 MB; only re-download them on a cache miss.
+      # System deps are cheap and must be installed either way.
+      - name: Install browser binaries
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium webkit
+
+      - name: Install browser system dependencies
+        run: npx playwright install-deps chromium webkit
 
       - name: Run E2E
         run: npm run test:e2e
